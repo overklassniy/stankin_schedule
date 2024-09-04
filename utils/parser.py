@@ -183,7 +183,7 @@ def create_message(today_schedule, increment_day=0):
         tmp = lesson.split('\n')
         name = '📚 ' + tmp[0]
         if tmp[1] not in ['лекция', 'семинар']:
-            prepod = f'📚 ' + tmp[1]
+            prepod = f'👤 ' + tmp[1]
             lesson_type = '⚙️ ' + tmp[2]
             location = '📍 ' + tmp[3]
             duration = '🗓 ' + tmp[4]
