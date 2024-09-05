@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def fix_labs(df):
+def fix_labs(df: pd.DataFrame) -> pd.DataFrame:
     # Создаём копию DataFrame, чтобы не изменять оригинал
     df_copy = df.copy()
 
@@ -31,7 +31,7 @@ def fix_labs(df):
     return df_copy
 
 
-def parse_pdf(file_path):
+def parse_pdf(file_path: str) -> dict:
     # Извлечение таблиц из PDF файла, обработка всех страниц
     tables = camelot.read_pdf(file_path, pages='all')
 
@@ -69,12 +69,12 @@ def parse_pdf(file_path):
     return schedule
 
 
-def parse_date_range(date_range, increment_day=0):
+def parse_date_range(date_range: str, increment_day: int = 0) -> list:
     """Парсит строку с датами и возвращает список дат, когда проводится занятие."""
     today = datetime.today() + timedelta(increment_day)
     day, month = today.day, today.month
 
-    def is_within_period(start, end, is_weekly=False):
+    def is_within_period(start: str, end: str, after_week: bool = False) -> bool:
         start_day, start_month = map(int, start.split('.'))
         end_day, end_month = map(int, end.split('.'))
 
@@ -83,9 +83,9 @@ def parse_date_range(date_range, increment_day=0):
         if end_date < start_date:
             end_date = datetime(today.year + 1, end_month, end_day)  # Если период охватывает конец года
 
-        if is_weekly:
+        if after_week:
             if start_date <= today <= end_date:
-                return (today - start_date).days % 7 == 0
+                return (today - start_date).days % 14 == 0
         else:
             return start_date <= today <= end_date
 
@@ -102,7 +102,7 @@ def parse_date_range(date_range, increment_day=0):
             elif 'ч.н.' in part:
                 part = part.replace(' ч.н.', '')
                 start_date, end_date = part.split('-')
-                if is_within_period(start_date, end_date, is_weekly=True):
+                if is_within_period(start_date, end_date, after_week=True):
                     valid_dates.append(part)
         else:
             if '.' in part:
@@ -113,7 +113,7 @@ def parse_date_range(date_range, increment_day=0):
     return valid_dates
 
 
-def get_today_schedule(schedule, increment_day=0):
+def get_today_schedule(schedule: dict, increment_day: int = 0) -> list:
     """Возвращает расписание на текущий день, сохраняя пустые ячейки."""
     today = (datetime.today() + timedelta(increment_day)).strftime('%A')
     day_map = {
@@ -157,8 +157,12 @@ def get_today_schedule(schedule, increment_day=0):
     return today_schedule
 
 
-def create_message(today_schedule, increment_day=0):
-    today = (datetime.today() + timedelta(increment_day)).strftime('%A')
+def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool = True) -> str:
+    date_ = datetime.today() + timedelta(increment_day)
+    today = date_.strftime('%A')
+    if today == 'Sunday':
+        return 'Выходной'
+    date = date_.strftime('%d.%m')
     day_map = {
         'Monday': 'Понедельник',
         'Tuesday': 'Вторник',
@@ -168,9 +172,13 @@ def create_message(today_schedule, increment_day=0):
         'Saturday': 'Суббота',
         'Sunday': 'Воскресенье'
     }
+
     times = ['8:30 - 10:10', '10:20 - 12:00', '12:20 - 14:00', '14:10 - 15:50', '16:00 - 17:40', '18:00 - 19:30', '19:40 - 21:10', '21:20 - 22:50']
     today_rus = day_map[today]
-    message = f'<b>Доброе утро, сегодня {today_rus.lower()}. Расписание на сегодня:</b>\n'
+    if scheduled:
+        message = f'<b>Доброе утро, сегодня {today_rus.lower()}. Расписание на сегодня:</b>\n'
+    else:
+        message = f'<b>Расписание на {today_rus.lower()} ({date}):</b>\n'
 
     lessons = []
     time_counter = 0
@@ -182,22 +190,28 @@ def create_message(today_schedule, increment_day=0):
             lesson = lesson.replace('лекции', 'лекция')
         tmp = lesson.split('\n')
         name = '📚 ' + tmp[0]
-        if tmp[1] not in ['лекция', 'семинар']:
-            prepod = f'👤 ' + tmp[1] + '.'
-            lesson_type = '⚙️ ' + tmp[2]
-            location = '📍 ' + tmp[3]
-            duration = '🗓 ' + tmp[4]
-            time = '⏰ ' + times[time_counter]
+        if tmp[1] not in ['лекция', 'семинар', 'лабораторные занятия']:
+            prepod = f'👤 {tmp[1]}.'
+            lesson_type = f'⚙️ {tmp[2]}'
         else:
             prepod = None
             lesson_type = '⚙️ ' + tmp[1]
-            location = '📍 ' + tmp[2]
-            duration = '🗓 ' + tmp[3]
-            time = '⏰ ' + times[time_counter]
-        if prepod:
-            lesson_message = f'<blockquote>{name}\n{prepod}\n{lesson_type}\n{location}\n{duration}\n{time}</blockquote>'
+        try:
+            location = f'📍 {int(tmp[-2])}'
+        except ValueError:
+            location = f'📍 {tmp[-2]}'
+        duration = f'🗓 {tmp[-1]}'
+        time = f'⏰ {times[time_counter]}'
+        if 'лабораторные занятия' in lesson_type:
+            subgroup = f'🗂 Группа: {tmp[-3]}'
+            time_counter -= 1
         else:
-            lesson_message = f'<blockquote>{name}\n{lesson_type}\n{location}\n{duration}\n{time}</blockquote>'
+            subgroup = None
+        args = ''
+        for arg in [name, prepod, lesson_type, subgroup, location, duration, time]:
+            if arg:
+                args += f'{arg}\n'
+        lesson_message = f'<blockquote>{args.strip()}</blockquote>'
         lessons.append(lesson_message)
         time_counter += 1
 
