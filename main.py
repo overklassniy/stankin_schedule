@@ -43,12 +43,12 @@ async def handle_code_command(message: types.Message) -> None:
 
 # Обработчик команды /schedule
 @dp.message(Command(BotCommand(command='schedule', description='Получить расписание на сегодня')))
-async def handle_code_command(message: types.Message) -> None:
+async def handle_schedule_command(message: types.Message) -> None:
     args = message.text.split()
-    if len(args) < 2:
-        increment_day = 0
-    else:
+    try:
         increment_day = int(args[-1])
+    except Exception:
+        increment_day = 0
 
     date = (datetime.today() + timedelta(increment_day)).strftime('%d.%m')
 
