@@ -197,7 +197,8 @@ def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool
             prepod = None
             lesson_type = '⚙️ ' + tmp[1]
         try:
-            location = f'📍 Каб. {int(tmp[-2])}'
+            location_number = int(tmp[-2])
+            location = f'📍 Каб. {tmp[-2]}'
         except Exception:
             location = f'📍 {tmp[-2]}'
         duration = f'🗓 {tmp[-1]}'
