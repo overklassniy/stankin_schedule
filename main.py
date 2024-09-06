@@ -93,9 +93,15 @@ async def send_daily_message(bot: Bot) -> None:
                 if config["ENABLE_IMAGE"]:
                     images_dir = config['IMAGES_DIR']
                     image = FSInputFile(f'{images_dir}/{choice(os.listdir(images_dir))}')
-                    await bot.send_photo(chat_id=chat_id, photo=image, caption=message_text, parse_mode=ParseMode.HTML)
+                    if config['THREADED']:
+                        await bot.send_photo(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], photo=image, caption=message_text, parse_mode=ParseMode.HTML)
+                    else:
+                        await bot.send_photo(chat_id=chat_id, photo=image, caption=message_text, parse_mode=ParseMode.HTML)
                 else:
-                    await bot.send_message(chat_id=chat_id, text=message_text, parse_mode=ParseMode.HTML)
+                    if config['THREADED']:
+                        await bot.send_message(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], text=message_text, parse_mode=ParseMode.HTML)
+                    else:
+                        await bot.send_message(chat_id=chat_id, text=message_text, parse_mode=ParseMode.HTML)
                 logger.info(f"Sent daily schedule to {chat_id}")
             # После отправки сообщения, бот "засыпает" на SLEEP_TIME секунд
             await asyncio.sleep(config['SLEEP_TIME'])

@@ -178,6 +178,8 @@ def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool
     if scheduled:
         message = f'<b>Доброе утро, сегодня {today_rus.lower()}. Расписание на сегодня:</b>\n'
     else:
+        if today_rus[-1] == 'а':
+            today_rus = today_rus[:-1] + 'у'
         message = f'<b>Расписание на {today_rus.lower()} ({date}):</b>\n'
 
     lessons = []
