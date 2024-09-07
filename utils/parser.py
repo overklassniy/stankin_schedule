@@ -6,6 +6,15 @@ import pandas as pd
 
 
 def fix_labs(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Исправляет формат лабораторных в таблице, объединяя строки, которые должны быть объединены.
+
+    Args:
+        df (pd.DataFrame): Исходный DataFrame с данными.
+
+    Returns:
+        pd.DataFrame: DataFrame с исправленными лабораторными.
+    """
     # Создаём копию DataFrame, чтобы не изменять оригинал
     df_copy = df.copy()
 
@@ -26,12 +35,22 @@ def fix_labs(df: pd.DataFrame) -> pd.DataFrame:
     # Удаляем строки, которые стали полностью пустыми
     df_copy = df_copy.dropna(how='all')
 
+    # Заменяем оставшиеся NaN обратно на пустые строки
     df_copy.replace(np.nan, '', inplace=True)
 
     return df_copy
 
 
 def parse_pdf(file_path: str) -> dict:
+    """
+    Парсит PDF-файл с расписанием, возвращая структурированные данные.
+
+    Args:
+        file_path (str): Путь к PDF-файлу.
+
+    Returns:
+        dict: Структурированные данные расписания, где ключи - это дни недели, а значения - списки занятий.
+    """
     # Извлечение таблиц из PDF файла, обработка всех страниц
     tables = camelot.read_pdf(file_path, pages='all')
 
@@ -70,11 +89,31 @@ def parse_pdf(file_path: str) -> dict:
 
 
 def parse_date_range(date_range: str, increment_day: int = 0) -> list:
-    """Парсит строку с датами и возвращает список дат, когда проводится занятие."""
+    """
+    Парсит строку с датами и возвращает список валидных дат.
+
+    Args:
+        date_range (str): Строка с датами.
+        increment_day (int, optional): Число дней для смещения даты (по умолчанию 0).
+
+    Returns:
+        list: Список валидных дат.
+    """
     today = datetime.today() + timedelta(increment_day)
     day, month = today.day, today.month
 
     def is_within_period(start: str, end: str, after_week: bool = False) -> bool:
+        """
+        Проверяет, находится ли текущая дата в пределах периода.
+
+        Args:
+            start (str): Начальная дата в формате 'дд.мм'.
+            end (str): Конечная дата в формате 'дд.мм'.
+            after_week (bool): Флаг для двухнедельных периодов (чётная/нечётная недели).
+
+        Returns:
+            bool: True, если текущая дата попадает в период.
+        """
         start_day, start_month = map(int, start.split('.'))
         end_day, end_month = map(int, end.split('.'))
 
@@ -114,7 +153,16 @@ def parse_date_range(date_range: str, increment_day: int = 0) -> list:
 
 
 def get_today_schedule(schedule: dict, increment_day: int = 0) -> list:
-    """Возвращает расписание на текущий день, сохраняя пустые ячейки."""
+    """
+    Возвращает расписание на день.
+
+    Args:
+        schedule (dict): Расписание всех дней.
+        increment_day (int, optional): Число дней для смещения даты (по умолчанию 0).
+
+    Returns:
+        list: Список занятий на текущий день.
+    """
     today = (datetime.today() + timedelta(increment_day)).strftime('%A')
     day_map = {
         'Monday': 'Понедельник',
@@ -158,6 +206,17 @@ def get_today_schedule(schedule: dict, increment_day: int = 0) -> list:
 
 
 def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool = True) -> str:
+    """
+    Формирует сообщение с расписанием на день.
+
+    Args:
+        today_schedule (list): Расписание на день.
+        increment_day (int, optional): Смещение даты (по умолчанию 0).
+        scheduled (bool, optional): Флаг, указывающий на тип формирования сообщения (по умолчанию True).
+
+    Returns:
+        str: Готовое сообщение с расписанием.
+    """
     date_ = datetime.today() + timedelta(increment_day)
     today = date_.strftime('%A')
     if today == 'Sunday':
