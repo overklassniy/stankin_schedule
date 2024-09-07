@@ -104,4 +104,4 @@ python main.py
 - [Python](https://www.python.org/downloads/) - Используемый язык программирования.
 - [aiogram](https://github.com/aiogram/aiogram) - Фреймворк для асинхронной работы с Telegram Bot API.
 - [python-dotenv](https://pypi.org/project/python-dotenv/) - Библиотека для работы с переменными окружения.
-- [camelot](https://pypi.org/project/camelot-py/): Библиотека для парсинга таблиц из PDF.
+- [camelot](https://pypi.org/project/camelot-py/) - Библиотека для парсинга таблиц из PDF.
