@@ -44,7 +44,7 @@ async def handle_code_command(message: types.Message) -> None:
 
 
 # Обработчик команды /schedule
-@dp.message(Command(BotCommand(command='schedule', description='Получить расписание на сегодня')))
+@dp.message(Command(BotCommand(command='schedule', description='Получить расписание на день')))
 async def handle_schedule_command(message: types.Message) -> None:
     """
     Обрабатывает команду /schedule и отправляет расписание на день.
@@ -66,7 +66,33 @@ async def handle_schedule_command(message: types.Message) -> None:
     # Получаем расписание на нужный день
     today_schedule = get_today_schedule(parse_pdf(config['PDF_PATH']), increment_day)
     message_text = create_message(today_schedule, increment_day, scheduled=False)
-    # Проверяем, если сегодня выходной (воскресенье)
+    # Проверяем, если это выходной (воскресенье)
+    if message_text == 'Выходной':
+        message_text = f'<b>{date} - Воскресенье. Занятий нет!</b>'
+    # Отправляем сообщение с расписанием пользователю
+    await message.answer(text=message_text, parse_mode=ParseMode.HTML)
+
+    logger.info(f"Sent schedule for {date} to {message.from_user.id}")
+
+
+# Обработчик команды /tomorrow
+@dp.message(Command(BotCommand(command='tomorrow', description='Получить расписание на завтра')))
+async def handle_tomorrow_command(message: types.Message) -> None:
+    """
+    Обрабатывает команду /tomorrow и отправляет расписание на завтра.
+
+    Args:
+        message (types.Message): Сообщение, содержащее команду /tomorrow.
+    """
+    increment_day = 1
+
+    # Формируем дату с учётом смещения
+    date = (datetime.today() + timedelta(increment_day)).strftime('%d.%m')
+
+    # Получаем расписание на нужный день
+    today_schedule = get_today_schedule(parse_pdf(config['PDF_PATH']), increment_day)
+    message_text = create_message(today_schedule, increment_day, scheduled=False)
+    # Проверяем, если это выходной (воскресенье)
     if message_text == 'Выходной':
         message_text = f'<b>{date} - Воскресенье. Занятий нет!</b>'
     # Отправляем сообщение с расписанием пользователю
@@ -119,13 +145,15 @@ async def send_daily_message(bot: Bot) -> None:
                     image = FSInputFile(f'{images_dir}/{choice(os.listdir(images_dir))}')
                     # Если включен режим отправки в тему супергруппы
                     if config['THREADED']:
-                        await bot.send_photo(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], photo=image, caption=message_text, parse_mode=ParseMode.HTML)
+                        await bot.send_photo(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], photo=image, caption=message_text,
+                                             parse_mode=ParseMode.HTML)
                     else:
                         await bot.send_photo(chat_id=chat_id, photo=image, caption=message_text, parse_mode=ParseMode.HTML)
                 else:
                     # Отправка только текста расписания
                     if config['THREADED']:
-                        await bot.send_message(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], text=message_text, parse_mode=ParseMode.HTML)
+                        await bot.send_message(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], text=message_text,
+                                               parse_mode=ParseMode.HTML)
                     else:
                         await bot.send_message(chat_id=chat_id, text=message_text, parse_mode=ParseMode.HTML)
                 logger.info(f"Sent daily schedule to {chat_id}")
