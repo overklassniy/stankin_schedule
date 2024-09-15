@@ -86,3 +86,41 @@ def save_json_file(file_path: str, data: Union[dict, list]) -> None:
     # Сохраняем данные в JSON файл
     with open(file_path, 'w') as f:
         json.dump(data, f)
+
+
+def days_until_date(date_str: str) -> int:
+    """
+    Вычисляет количество дней до указанной даты в формате 'день.месяц.год' или 'день.месяц'.
+
+    Если дата указывается в формате 'день.месяц', используется текущий год.
+    Если указанная дата уже прошла в текущем году, возвращается количество дней до этой даты в следующем году.
+
+    Args:
+        date_str (str): Дата в строковом формате 'день.месяц.год' или 'день.месяц'.
+
+    Returns:
+        int: Количество дней до указанной даты.
+
+    Raises:
+        ValueError: Если строка даты не соответствует ожидаемому формату 'день.месяц' или 'день.месяц.год'.
+    """
+    # Получаем текущую дату
+    today = datetime.now().date()
+
+    # Парсим входную строку. Если год не указан, используем текущий год.
+    try:
+        # Если строка имеет формат 'день.месяц.год'
+        parsed_date = datetime.strptime(date_str, "%d.%m.%Y").date()
+    except ValueError:
+        # Если строка имеет формат 'день.месяц', добавляем текущий год
+        current_year = today.year
+        parsed_date = datetime.strptime(f"{date_str}.{current_year}", "%d.%m.%Y").date()
+
+    # Если дата уже прошла в этом году, добавляем год
+    if parsed_date < today:
+        parsed_date = parsed_date.replace(year=today.year + 1)
+
+    # Вычисляем количество дней до этой даты
+    days_left = (parsed_date - today).days
+
+    return days_left

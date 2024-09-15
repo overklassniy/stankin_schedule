@@ -53,6 +53,7 @@
    - `CHECK_TIME_INTERVAL`: Частота проверки времени для отправки расписания (в секундах).
    - `ENABLE_IMAGE`: Включить ли отправку изображения при отправке расписания.
    - `IMAGES_DIR`: Директория с изображениями для отправки используется, если параметр _ENABLE_IMAGE: true_.
+   - `ENABLE_SECURE`: Включить ли использование команд только в группе.
    
    Пример файла `config.json`:
    ```json
@@ -68,7 +69,8 @@
     "CHECK_TIME_INTERVAL": 55,
     "SLEEP_TIME": 84600,
     "ENABLE_IMAGE": true,
-    "IMAGES_DIR": "images"
+    "IMAGES_DIR": "images",
+    "ENABLE_SECURE": true
    }
    ```
 

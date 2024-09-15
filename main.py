@@ -11,7 +11,7 @@ from aiogram.types import BotCommand, FSInputFile
 from dotenv import load_dotenv
 
 sys.path.append("utils")
-from basic import logger, config
+from basic import logger, config, days_until_date
 from parser import parse_pdf, get_today_schedule, create_message
 
 # Загрузка переменных окружения
@@ -52,12 +52,20 @@ async def handle_schedule_command(message: types.Message) -> None:
     Args:
         message (types.Message): Сообщение, содержащее команду /schedule.
     """
+    if config['ENABLE_SECURE'] and message.chat.id != config['GROUP_ID']:
+        await message.answer(text='Эту команду можно использовать только в указанной группе.')
+        logger.info(f"{message.from_user.id} tried to use {message.text} in {message.chat.id}")
+        return None
     # Получаем аргументы из текста сообщения (например, если указано смещение по дате)
     args = message.text.split()
     try:
         # Пробуем извлечь число, чтобы учесть смещение по дням
-        increment_day = int(args[-1])
-    except Exception:
+        arg = args[-1]
+        if '.' in arg:
+            increment_day = days_until_date(arg)
+        else:
+            increment_day = int(args[-1])
+    except Exception as e:
         increment_day = 0
 
     # Формируем дату с учётом смещения
@@ -84,6 +92,11 @@ async def handle_tomorrow_command(message: types.Message) -> None:
     Args:
         message (types.Message): Сообщение, содержащее команду /tomorrow.
     """
+    if config['ENABLE_SECURE'] and message.chat.id != config['GROUP_ID']:
+        await message.answer(text='Эту команду можно использовать только в указанной группе.')
+        logger.info(f"{message.from_user.id} tried to use {message.text} in {message.chat.id}")
+        return None
+
     increment_day = 1
 
     # Формируем дату с учётом смещения

@@ -262,11 +262,11 @@ def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool
             location = f'📍 Каб. {tmp[-2]}'
         except Exception:
             location = f'📍 {tmp[-2]}'
-        duration = f'🗓 {tmp[-1]}'
+        duration = f'🗓 {tmp[-1].replace("[", "").replace("]", "")}'
         time = f'⏰ {times[time_counter]}'
         if 'лабораторные занятия' in lesson_type:
-            subgroup = f'🗂 Группа: {tmp[-3]}'
-            time_counter -= 1
+            subgroup = f'🗂 Группа: {tmp[-3].replace(")", "").replace("(", "")}'
+            time = f'⏰ {times[time_counter].split(" - ")[0]} - {times[time_counter + 1].split(" - ")[-1]}'
         else:
             subgroup = None
         args = ''
