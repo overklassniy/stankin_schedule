@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List, Union
 
 import camelot
 import numpy as np
@@ -185,15 +186,19 @@ def get_today_schedule(schedule: dict, increment_day: int = 0) -> list:
         # Проверка каждого элемента расписания
         for lesson in day_schedule:
             if isinstance(lesson, list):
-                found_valid = False
+                found_valid = []
                 for sublesson in lesson:
                     lines = sublesson.split('\n')
                     dates_line = lines[-1].strip('[]')
                     if parse_date_range(dates_line, increment_day):
-                        today_schedule.append(sublesson)
-                        found_valid = True
+                        found_valid.append(sublesson)
                 if not found_valid:
                     today_schedule.append("Окно")  # Для сохранения структуры
+                else:
+                    if len(found_valid) == 1:
+                        today_schedule.append(found_valid[0])
+                    else:
+                        today_schedule.append(found_valid)
             else:
                 lines = lesson.split('\n')
                 dates_line = lines[-1].strip('[]')
@@ -205,12 +210,51 @@ def get_today_schedule(schedule: dict, increment_day: int = 0) -> list:
     return today_schedule
 
 
-def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool = True) -> str:
+def format_lesson(lesson_info: List[str], times: List[str], time_counter: int) -> str:
+    """
+    Форматирует информацию о паре в блок для сообщения.
+
+    Args:
+        lesson_info (List[str]): Список строк с деталями о паре.
+        times (List[str]): Список временных интервалов пар.
+        time_counter (int): Индекс текущего временного интервала.
+
+    Returns:
+        str: Отформатированная информация о паре.
+    """
+    name = '📚 ' + lesson_info[0]
+    if lesson_info[1] not in ['лекция', 'семинар', 'лабораторные занятия']:
+        prepod = f'👤 {lesson_info[1]}.'
+        lesson_type = f'⚙️ {lesson_info[2]}'
+    else:
+        prepod = None
+        lesson_type = '⚙️ ' + lesson_info[1]
+
+    try:
+        location_number = int(lesson_info[-2])
+        location = f'📍 Каб. {lesson_info[-2]}'
+    except ValueError:
+        location = f'📍 {lesson_info[-2]}'
+
+    duration = f'🗓 {lesson_info[-1].replace("[", "").replace("]", "").replace("-", " - ")}'
+    time = f'⏰ {times[time_counter]}'
+
+    if 'лабораторные занятия' in lesson_type:
+        subgroup = f'🗂 Группа: {lesson_info[-3].replace(")", "").replace("(", "")}'
+        time = f'⏰ {times[time_counter].split(" - ")[0]} - {times[time_counter + 1].split(" - ")[-1]}'
+    else:
+        subgroup = None
+
+    args = [name, prepod, lesson_type, subgroup, location, duration, time]
+    return f'<blockquote>{chr(10).join(arg for arg in args if arg)}</blockquote>'
+
+
+def create_message(today_schedule: List[Union[str, List[str]]], increment_day: int = 0, scheduled: bool = True) -> str:
     """
     Формирует сообщение с расписанием на день.
 
     Args:
-        today_schedule (list): Расписание на день.
+        today_schedule (List[Union[str, List[str]]]): Расписание на день.
         increment_day (int, optional): Смещение даты (по умолчанию 0).
         scheduled (bool, optional): Флаг, указывающий на тип формирования сообщения (по умолчанию True).
 
@@ -219,8 +263,10 @@ def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool
     """
     date_ = datetime.today() + timedelta(increment_day)
     today = date_.strftime('%A')
+
     if today == 'Sunday':
         return 'Выходной'
+
     date = date_.strftime('%d.%m')
     day_map = {
         'Monday': 'Понедельник',
@@ -232,51 +278,34 @@ def create_message(today_schedule: list, increment_day: int = 0, scheduled: bool
         'Sunday': 'Воскресенье'
     }
 
-    times = ['8:30 - 10:10', '10:20 - 12:00', '12:20 - 14:00', '14:10 - 15:50', '16:00 - 17:40', '18:00 - 19:30', '19:40 - 21:10', '21:20 - 22:50']
+    times = ['8:30 - 10:10', '10:20 - 12:00', '12:20 - 14:00', '14:10 - 15:50',
+             '16:00 - 17:40', '18:00 - 19:30', '19:40 - 21:10', '21:20 - 22:50']
+
     today_rus = day_map[today]
+
     if scheduled:
         message = f'<b>Доброе утро, сегодня {today_rus.lower()}. Расписание на сегодня:</b>\n'
     else:
-        if today_rus[-1] == 'а':
-            today_rus = today_rus[:-1] + 'у'
-        message = f'<b>Расписание на {today_rus.lower()} ({date}):</b>\n'
+        today_rus_modified = today_rus[:-1] + 'у' if today_rus.endswith('а') else today_rus
+        message = f'<b>Расписание на {today_rus_modified.lower()} ({date}):</b>\n'
 
     lessons = []
     time_counter = 0
+
     for lesson in today_schedule:
         if lesson == 'Окно':
             time_counter += 1
             continue
-        if 'лекции' in lesson:
-            lesson = lesson.replace('лекции', 'лекция')
-        tmp = lesson.split('\n')
-        name = '📚 ' + tmp[0]
-        if tmp[1] not in ['лекция', 'семинар', 'лабораторные занятия']:
-            prepod = f'👤 {tmp[1]}.'
-            lesson_type = f'⚙️ {tmp[2]}'
-        else:
-            prepod = None
-            lesson_type = '⚙️ ' + tmp[1]
-        try:
-            location_number = int(tmp[-2])
-            location = f'📍 Каб. {tmp[-2]}'
-        except Exception:
-            location = f'📍 {tmp[-2]}'
-        duration = f'🗓 {tmp[-1].replace("[", "").replace("]", "")}'
-        time = f'⏰ {times[time_counter]}'
-        if 'лабораторные занятия' in lesson_type:
-            subgroup = f'🗂 Группа: {tmp[-3].replace(")", "").replace("(", "")}'
-            time = f'⏰ {times[time_counter].split(" - ")[0]} - {times[time_counter + 1].split(" - ")[-1]}'
-        else:
-            subgroup = None
-        args = ''
-        for arg in [name, prepod, lesson_type, subgroup, location, duration, time]:
-            if arg:
-                args += f'{arg}\n'
-        lesson_message = f'<blockquote>{args.strip()}</blockquote>'
-        lessons.append(lesson_message)
+
+        if isinstance(lesson, list):
+            for sublesson in lesson:
+                if sublesson == 'Окно':
+                    continue
+                lessons.append(format_lesson(sublesson.split('\n'), times, time_counter))
+            continue
+
+        lessons.append(format_lesson(lesson.split('\n'), times, time_counter))
         time_counter += 1
 
     message += '\n'.join(lessons)
-
     return message
