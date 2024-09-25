@@ -223,12 +223,13 @@ def format_lesson(lesson_info: List[str], times: List[str], time_counter: int) -
         str: Отформатированная информация о паре.
     """
     name = '📚 ' + lesson_info[0]
-    if lesson_info[1] not in ['лекция', 'семинар', 'лабораторные занятия']:
+    if lesson_info[1] not in ['лекции', 'семинар', 'лабораторные занятия']:
         prepod = f'👤 {lesson_info[1]}.'
         lesson_type = f'⚙️ {lesson_info[2]}'
     else:
         prepod = None
         lesson_type = '⚙️ ' + lesson_info[1]
+    lesson_type = lesson_type.replace('лекции', 'лекция')
 
     try:
         location_number = int(lesson_info[-2])
