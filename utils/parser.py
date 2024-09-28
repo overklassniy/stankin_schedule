@@ -101,6 +101,7 @@ def parse_date_range(date_range: str, increment_day: int = 0) -> list:
         list: Список валидных дат.
     """
     today = datetime.today() + timedelta(increment_day)
+    today = today.replace(hour=0, minute=0, second=0, microsecond=0)  # Обнуляем часы, минуты, секунды и микросекунды
     day, month = today.day, today.month
 
     def is_within_period(start: str, end: str, after_week: bool = False) -> bool:
@@ -268,7 +269,7 @@ def create_message(today_schedule: List[Union[str, List[str]]], increment_day: i
     if today == 'Sunday':
         return 'Выходной'
 
-    date = date_.strftime('%d.%m')
+    date = date_.strftime('%d.%m.%Y')
     day_map = {
         'Monday': 'Понедельник',
         'Tuesday': 'Вторник',
