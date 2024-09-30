@@ -304,6 +304,7 @@ def create_message(today_schedule: List[Union[str, List[str]]], increment_day: i
                 if sublesson == 'Окно':
                     continue
                 lessons.append(format_lesson(sublesson.split('\n'), times, time_counter))
+            time_counter += 1
             continue
 
         lessons.append(format_lesson(lesson.split('\n'), times, time_counter))
