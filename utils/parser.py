@@ -1,9 +1,12 @@
+import json
 from datetime import datetime, timedelta
 from typing import List, Union
 
 import camelot
 import numpy as np
 import pandas as pd
+
+from utils.basic import config
 
 
 def fix_labs(df: pd.DataFrame) -> pd.DataFrame:
@@ -211,6 +214,30 @@ def get_today_schedule(schedule: dict, increment_day: int = 0) -> list:
     return today_schedule
 
 
+def get_teachers_name(initials: str) -> str:
+    """
+    Возвращает полное имя преподавателя по его инициалам.
+
+    Args:
+        initials (str): Инициалы преподавателя (например, 'Иванов И.И.').
+
+    Returns:
+        str: Полное имя преподавателя, если оно найдено в файле, или сами инициалы, если запись не найдена или файл отсутствует.
+    """
+    try:
+        # Загружаем словарь с полными именами преподавателей из файла
+        with open(config['TEACHERS_FULLNAMES_PATH'], 'r', encoding='utf-8') as file:
+            teachers_names = json.load(file)
+
+        # Ищем полное имя по инициалам
+        full_name = teachers_names[initials]
+    except (KeyError, FileNotFoundError):
+        # Возвращаем инициалы, если полное имя не найдено или файл отсутствует
+        full_name = initials
+
+    return full_name
+
+
 def format_lesson(lesson_info: List[str], times: List[str], time_counter: int) -> str:
     """
     Форматирует информацию о паре в блок для сообщения.
@@ -225,10 +252,11 @@ def format_lesson(lesson_info: List[str], times: List[str], time_counter: int) -
     """
     name = '📚 ' + lesson_info[0]
     if lesson_info[1] not in ['лекции', 'семинар', 'лабораторные занятия']:
-        prepod = f'👤 {lesson_info[1]}.'
+        teacher_initials = f'{lesson_info[1]}.'
+        teacher_fullname = f'👤 {get_teachers_name(teacher_initials)}'
         lesson_type = f'⚙️ {lesson_info[2]}'
     else:
-        prepod = None
+        teacher_fullname = None
         lesson_type = '⚙️ ' + lesson_info[1]
     lesson_type = lesson_type.replace('лекции', 'лекция')
 
@@ -247,7 +275,7 @@ def format_lesson(lesson_info: List[str], times: List[str], time_counter: int) -
     else:
         subgroup = None
 
-    args = [name, prepod, lesson_type, subgroup, location, duration, time]
+    args = [name, teacher_fullname, lesson_type, subgroup, location, duration, time]
     return f'<blockquote>{chr(10).join(arg for arg in args if arg)}</blockquote>'
 
 
