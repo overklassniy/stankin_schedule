@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from random import choice
 from typing import List, Union
 
 import camelot
@@ -313,12 +314,6 @@ def create_message(today_schedule: List[Union[str, List[str]]], increment_day: i
 
     today_rus = day_map[today]
 
-    if scheduled:
-        message = f'<b>Доброе утро, сегодня {today_rus.lower()}. Расписание на сегодня:</b>\n'
-    else:
-        today_rus_modified = today_rus[:-1] + 'у' if today_rus.endswith('а') else today_rus
-        message = f'<b>Расписание на {today_rus_modified.lower()} ({date}):</b>\n'
-
     lessons = []
     time_counter = 0
 
@@ -338,5 +333,21 @@ def create_message(today_schedule: List[Union[str, List[str]]], increment_day: i
         lessons.append(format_lesson(lesson.split('\n'), times, time_counter))
         time_counter += 1
 
-    message += '\n'.join(lessons)
+    if scheduled:
+        message = f'<b>Доброе утро, сегодня {today_rus.lower()}. Расписание на сегодня:</b>\n'
+    else:
+        today_rus_modified = today_rus[:-1] + 'у' if today_rus.endswith('а') else today_rus
+        message = f'<b>Расписание на {today_rus_modified.lower()} ({date}):</b>\n'
+
+    if not lessons:
+        messages = [
+            f'<b>Доброе утро, сегодня {today_rus.lower()}, по совместительству – выходной!</b>\n',
+            f'<b>Доброе утро, сегодня {today_rus.lower()}. К счастью, без пар!</b>\n',
+            f'<b>Доброе утро, сегодня {today_rus.lower()}. Отдыхаем!</b>\n',
+            f'<b>Доброе утро, сегодня {today_rus.lower()}. Продолжаем спать...</b>\n'
+        ]
+        message = choice(messages)
+    else:
+        message += '\n'.join(lessons)
+
     return message
