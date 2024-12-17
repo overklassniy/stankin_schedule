@@ -340,13 +340,18 @@ def create_message(today_schedule: List[Union[str, List[str]]], increment_day: i
         message = f'<b>Расписание на {today_rus_modified.lower()} ({date}):</b>\n'
 
     if not lessons:
-        messages = [
-            f'<b>Доброе утро, сегодня {today_rus.lower()}, по совместительству – выходной!</b>\n',
-            f'<b>Доброе утро, сегодня {today_rus.lower()}. К счастью, без пар!</b>\n',
-            f'<b>Доброе утро, сегодня {today_rus.lower()}. Отдыхаем!</b>\n',
-            f'<b>Доброе утро, сегодня {today_rus.lower()}. Продолжаем спать...</b>\n'
-        ]
-        message = choice(messages)
+        if scheduled:
+            messages = [
+                f'<b>Доброе утро, сегодня {today_rus.lower()}, по совместительству – выходной!</b>\n',
+                f'<b>Доброе утро, сегодня {today_rus.lower()}. К счастью, без пар!</b>\n',
+                f'<b>Доброе утро, сегодня {today_rus.lower()}. Отдыхаем!</b>\n',
+                f'<b>Доброе утро, сегодня {today_rus.lower()}. Продолжаем спать...</b>\n'
+            ]
+            message = choice(messages)
+        else:
+            today_rus_modified = today_rus[:-1] + 'у' if today_rus.endswith('а') else today_rus
+            message = f'<b>В {today_rus_modified.lower()} ({date}) пар нет.</b>\n'
+
     else:
         message += '\n'.join(lessons)
 
