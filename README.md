@@ -55,6 +55,7 @@
    - `ENABLE_IMAGE`: Включить ли отправку изображения при отправке расписания.
    - `IMAGES_DIR`: Директория с изображениями для отправки используется, если параметр _ENABLE_IMAGE: true_.
    - `ENABLE_SECURE`: Включить ли использование команд только в группе.
+   - `ENABLE_TOMORROW_BUTTON`: Включить ли кнопку "Расписание на завтра" под сообщением с ежедневным расписанием.
    
    Пример файла `config.json`:
    ```json
@@ -72,7 +73,8 @@
     "SLEEP_TIME": 84600,
     "ENABLE_IMAGE": true,
     "IMAGES_DIR": "images",
-    "ENABLE_SECURE": true
+    "ENABLE_SECURE": true,
+    "ENABLE_TOMORROW_BUTTON": false
    }
    ```
 

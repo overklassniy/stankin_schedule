@@ -344,8 +344,8 @@ def create_message(today_schedule: List[Union[str, List[str]]], increment_day: i
             messages = [
                 f'<b>Доброе утро, сегодня {today_rus.lower()}, по совместительству – выходной!</b>\n',
                 f'<b>Доброе утро, сегодня {today_rus.lower()}. К счастью, без пар!</b>\n',
-                f'<b>Доброе утро, сегодня {today_rus.lower()}. Отдыхаем!</b>\n',
-                f'<b>Доброе утро, сегодня {today_rus.lower()}. Продолжаем спать...</b>\n'
+                f'<b>Доброе утро, сегодня {today_rus.lower()}. Сегодня без пар. Отдыхаем!</b>\n',
+                f'<b>Доброе утро, сегодня {today_rus.lower()}. Сегодня без пар. Продолжаем спать...</b>\n'
             ]
             message = choice(messages)
         else:

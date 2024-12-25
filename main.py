@@ -123,9 +123,9 @@ async def handle_tomorrow_query(call: CallbackQuery) -> None:
     Args:
         call (CallbackQuery): Объект CallbackQuery, содержащий информацию о нажатии на кнопку.
     """
-    await handle_tomorrow_command(call.message)
-
-    logger.info(f"Sent schedule for {call.message.chat.id} to {call.message.from_user.id} via inline button")
+    if config["ENABLE_TOMORROW_BUTTON"]:
+        await handle_tomorrow_command(call.message)
+        logger.info(f"Sent schedule for {call.message.chat.id} to {call.message.from_user.id} via inline button")
 
 
 # Обработчик личных сообщений
@@ -166,11 +166,14 @@ async def send_daily_message(bot: Bot) -> None:
             today_schedule = get_today_schedule(parse_pdf(config['PDF_PATH']))
             message_text = create_message(today_schedule)
             if message_text != 'Выходной':
-                # Создаем Inline клавиатуру
-                inline_kb_list = [
-                    [InlineKeyboardButton(text="Расписание на завтра", callback_data='tomorrow')]
-                ]
-                keyboard = InlineKeyboardMarkup(inline_keyboard=inline_kb_list)
+                keyboard = None
+
+                # Проверяем, включена ли кнопка "Расписание на завтра"
+                if config["ENABLE_TOMORROW_BUTTON"]:
+                    inline_kb_list = [
+                        [InlineKeyboardButton(text="Расписание на завтра", callback_data='tomorrow')]
+                    ]
+                    keyboard = InlineKeyboardMarkup(inline_keyboard=inline_kb_list)
 
                 # Если включен режим отправки изображения
                 if config["ENABLE_IMAGE"]:
@@ -179,16 +182,16 @@ async def send_daily_message(bot: Bot) -> None:
                     # Если включен режим отправки в тему супергруппы
                     if config['THREADED']:
                         await bot.send_photo(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], photo=image, caption=message_text,
-                                             parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                                             parse_mode=ParseMode.HTML, reply_markup=keyboard if keyboard else None)
                     else:
-                        await bot.send_photo(chat_id=chat_id, photo=image, caption=message_text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                        await bot.send_photo(chat_id=chat_id, photo=image, caption=message_text, parse_mode=ParseMode.HTML, reply_markup=keyboard if keyboard else None)
                 else:
                     # Отправка только текста расписания
                     if config['THREADED']:
                         await bot.send_message(chat_id=chat_id, message_thread_id=config['THREAD_NUMBER'], text=message_text,
-                                               parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                                               parse_mode=ParseMode.HTML, reply_markup=keyboard if keyboard else None)
                     else:
-                        await bot.send_message(chat_id=chat_id, text=message_text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                        await bot.send_message(chat_id=chat_id, text=message_text, parse_mode=ParseMode.HTML, reply_markup=keyboard if keyboard else None)
                 logger.info(f"Sent daily schedule to {chat_id}")
             # После отправки сообщения, бот "засыпает" на SLEEP_TIME секунд
             await asyncio.sleep(config['SLEEP_TIME'])
